@@ -18,6 +18,7 @@ public class MapaDijkstraGUI extends JFrame {
     private Image mapa;
     private JPanel painelMapa;
     private List<Vertice> caminhoAtual = new ArrayList<>();
+    private JLabel posicaoMouseLabel;
 
     public MapaDijkstraGUI() {
         setTitle("Menor Caminho entre Capitais - Dijkstra");
@@ -25,7 +26,7 @@ public class MapaDijkstraGUI extends JFrame {
         inicializarDados();
 
         // 📌 Caminho relativo para imagem (fora da pasta src)
-        ImageIcon iconeOriginal = new ImageIcon("img/mapa.jpg");
+        ImageIcon iconeOriginal = new ImageIcon("ALGORITMO DE DIJKSTRA\\img\\mapa.jpg");
         int larguraDesejada = 630;
         int alturaDesejada = 727;
         mapa = iconeOriginal.getImage().getScaledInstance(larguraDesejada, alturaDesejada, Image.SCALE_SMOOTH);
@@ -71,6 +72,17 @@ public class MapaDijkstraGUI extends JFrame {
         resultadoArea.setEditable(false);
         resultadoArea.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
 
+        posicaoMouseLabel = new JLabel("Posição do mouse: ");
+        posicaoMouseLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
+        add(posicaoMouseLabel, BorderLayout.NORTH);
+
+        painelMapa.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                int x = e.getX();
+                int y = e.getY();
+                posicaoMouseLabel.setText("Posição do mouse: (" + x + ", " + y + ")");
+            }
+        });
 
         add(new JScrollPane(painelMapa), BorderLayout.CENTER);
         add(new JScrollPane(resultadoArea), BorderLayout.SOUTH);
@@ -169,34 +181,35 @@ public class MapaDijkstraGUI extends JFrame {
             grafo.criarAresta(siglaToVertice.get(origem).getId(), siglaToVertice.get(destino).getId(), distancia);
         }
 
-        posicoesCapitais.put("AC", new Point((int) (175 * 0.35), (int) (823 * 0.275)));
-        posicoesCapitais.put("AL", new Point((int) (1515 * 0.35), (int) (1502 * 0.275)));
-        posicoesCapitais.put("AP", new Point((int) (943 * 0.35), (int) (313 * 0.275)));
-        posicoesCapitais.put("AM", new Point((int) (526 * 0.35), (int) (560 * 0.275)));
-        posicoesCapitais.put("BA", new Point((int) (1390 * 0.35), (int) (1360 * 0.275)));
-        posicoesCapitais.put("CE", new Point((int) (1543 * 0.35), (int) (980 * 0.275)));
-        posicoesCapitais.put("DF", new Point((int) (1184 * 0.35), (int) (1260 * 0.275)));
-        posicoesCapitais.put("ES", new Point((int) (1336 * 0.35), (int) (1610 * 0.275)));
-        posicoesCapitais.put("GO", new Point((int) (1132 * 0.35), (int) (1360 * 0.275)));
-        posicoesCapitais.put("MA", new Point((int) (1328 * 0.35), (int) (840 * 0.275)));
-        posicoesCapitais.put("MT", new Point((int) (872 * 0.35), (int) (1220 * 0.275)));
-        posicoesCapitais.put("MS", new Point((int) (912 * 0.35), (int) (1535 * 0.275)));
-        posicoesCapitais.put("MG", new Point((int) (1240 * 0.35), (int) (1535 * 0.275)));
-        posicoesCapitais.put("PA", new Point((int) (1025 * 0.35), (int) (660 * 0.275)));
-        posicoesCapitais.put("PB", new Point((int) (1595 * 0.35), (int) (1100 * 0.275)));
-        posicoesCapitais.put("PR", new Point((int) (1072 * 0.35), (int) (1925 * 0.275)));
-        posicoesCapitais.put("PE", new Point((int) (1557 * 0.35), (int) (1160 * 0.275)));
-        posicoesCapitais.put("PI", new Point((int) (1405 * 0.35), (int) (980 * 0.275)));
-        posicoesCapitais.put("RJ", new Point((int) (1295 * 0.35), (int) (1750 * 0.275)));
-        posicoesCapitais.put("RN", new Point((int) (1650 * 0.35), (int) (1010 * 0.275)));
-        posicoesCapitais.put("RS", new Point((int) (1025 * 0.35), (int) (2305 * 0.275)));
-        posicoesCapitais.put("RO", new Point((int) (502 * 0.35), (int) (910 * 0.275)));
-        posicoesCapitais.put("RR", new Point((int) (655 * 0.35), (int) (193 * 0.275)));
-        posicoesCapitais.put("SC", new Point((int) (1095 * 0.35), (int) (2125 * 0.275)));
-        posicoesCapitais.put("SP", new Point((int) (1184 * 0.35), (int) (1915 * 0.275)));
-        posicoesCapitais.put("SE", new Point((int) (1471 * 0.35), (int) (1430 * 0.275)));
-        posicoesCapitais.put("TO", new Point((int) (1138 * 0.35), (int) (823 * 0.275)));
+        posicoesCapitais.put("AC", new Point(55, 274));
+        posicoesCapitais.put("AL", new Point(604, 285));
+        posicoesCapitais.put("AP", new Point(349, 79));
+        posicoesCapitais.put("AM", new Point(151, 176));
+        posicoesCapitais.put("BA", new Point(500, 330));
+        posicoesCapitais.put("CE", new Point(539, 196));
+        posicoesCapitais.put("DF", new Point(396, 374));
+        posicoesCapitais.put("ES", new Point(526, 465));
+        posicoesCapitais.put("GO", new Point(371, 410));
+        posicoesCapitais.put("MA", new Point(457, 194));
+        posicoesCapitais.put("MT", new Point(305, 335));
+        posicoesCapitais.put("MS", new Point(305, 475));
+        posicoesCapitais.put("MG", new Point(459, 452));
+        posicoesCapitais.put("PA", new Point(326, 189));
+        posicoesCapitais.put("PB", new Point(599, 238));
+        posicoesCapitais.put("PR", new Point(351, 550));
+        posicoesCapitais.put("PE", new Point(569, 262));
+        posicoesCapitais.put("PI", new Point(483, 254));
+        posicoesCapitais.put("RJ", new Point(493, 512));
+        posicoesCapitais.put("RN", new Point(590, 218));
+        posicoesCapitais.put("RS", new Point(331, 640));
+        posicoesCapitais.put("RO", new Point(177, 301));
+        posicoesCapitais.put("RR", new Point(199, 62));
+        posicoesCapitais.put("SC", new Point(371, 598));
+        posicoesCapitais.put("SP", new Point(395, 508));
+        posicoesCapitais.put("SE", new Point(579, 306));
+        posicoesCapitais.put("TO", new Point(406, 298));
     }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MapaDijkstraGUI().setVisible(true));
     }
