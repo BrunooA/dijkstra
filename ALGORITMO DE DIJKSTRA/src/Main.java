@@ -1,117 +1,258 @@
 package src;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
+import javax.swing.Timer;
 
-public class Main {
+public class Main extends JFrame {
 
-    public void run() {
-        Scanner scanner = new Scanner(System.in); 
+    private Map<String, Point> posicoesCapitais;
+    private Map<String, Vertice> siglaToVertice;
+    private Map<Integer, String> idToSigla;
+    private AlgoritmoDijkstra grafo;
 
-        List<String> nomesCapitais = Arrays.asList(
-                "Rio Branco", "Maceió", "Macapá", "Manaus", "Salvador", "Fortaleza", "Brasília", "Vitória",
-                "Goiânia", "São Luís", "Cuiabá", "Campo Grande", "Belo Horizonte", "Belém", "João Pessoa",
-                "Curitiba", "Recife", "Teresina", "Rio de Janeiro", "Natal", "Porto Alegre", "Porto Velho",
-                "Boa Vista", "Florianópolis", "São Paulo", "Aracaju", "Palmas"
-        );
+    private String origemSelecionada = null;
+    private String destinoSelecionado = null;
+    private JTextArea resultadoArea;
+    private Image mapa;
+    private JPanel painelMapa;
+    private List<Vertice> caminhoAtual = new ArrayList<>();
+    private JLabel posicaoMouseLabel;
 
-        List<String> siglasCapitais = Arrays.asList(
-                "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB",
-                "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-        );
+    private Timer animacaoTimer;
+    private int etapaAnimacao = 0;
+    private List<Point> pontosInterpolados = new ArrayList<>();
+    private Point posicaoAviao = null;
+    private Image aviaoImagem;
 
-        // Criar o grafo e mapas de siglas para vértices
-        AlgoritmoDijkstra grafo = new AlgoritmoDijkstra();
-        Map<String, Vertice> siglaToVertice = new HashMap<>();
-        Map<Integer, String> idToSigla = new HashMap<>();
+    public Main() {
+        setTitle("Menor Caminho entre Capitais - Dijkstra");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        inicializarDados();
 
-        System.out.println("--- Capitais e suas siglas ---");
-        for (int i = 0; i < siglasCapitais.size(); i++) {
-            String sigla = siglasCapitais.get(i).toLowerCase();
-            Vertice v = new Vertice(i);
-            grafo.adicionarVertice(i);
-            siglaToVertice.put(sigla, v);
-            idToSigla.put(i, siglasCapitais.get(i));
-            System.out.printf("%-20s (%s)\n", nomesCapitais.get(i), siglasCapitais.get(i));
-        }
-        System.out.println("-------------------------------\n");
+        ImageIcon iconeOriginal = new ImageIcon("ALGORITMO DE DIJKSTRA\\img\\mapa.jpg");
+        mapa = iconeOriginal.getImage().getScaledInstance(630, 727, Image.SCALE_SMOOTH);
 
-        // Criar as conexões entre os vértices
-        grafo.criarAresta(siglaToVertice.get("ac").getId(), siglaToVertice.get("ro").getId(), 544);
-        grafo.criarAresta(siglaToVertice.get("am").getId(), siglaToVertice.get("ro").getId(), 901); 
-        grafo.criarAresta(siglaToVertice.get("am").getId(), siglaToVertice.get("rr").getId(), 785); 
-        grafo.criarAresta(siglaToVertice.get("am").getId(), siglaToVertice.get("mt").getId(), 2350); 
-        grafo.criarAresta(siglaToVertice.get("am").getId(), siglaToVertice.get("pa").getId(), 5293); 
-        grafo.criarAresta(siglaToVertice.get("ap").getId(), siglaToVertice.get("pa").getId(), 605); 
-        grafo.criarAresta(siglaToVertice.get("rr").getId(), siglaToVertice.get("pa").getId(), 1518); 
-        grafo.criarAresta(siglaToVertice.get("ro").getId(), siglaToVertice.get("mt").getId(), 1450); 
-        grafo.criarAresta(siglaToVertice.get("pa").getId(), siglaToVertice.get("to").getId(), 1085); 
-        grafo.criarAresta(siglaToVertice.get("pa").getId(), siglaToVertice.get("ma").getId(), 806); 
-        grafo.criarAresta(siglaToVertice.get("ma").getId(), siglaToVertice.get("pi").getId(), 446); 
-        grafo.criarAresta(siglaToVertice.get("pi").getId(), siglaToVertice.get("ce").getId(), 598); 
-        grafo.criarAresta(siglaToVertice.get("ce").getId(), siglaToVertice.get("rn").getId(), 528); 
-        grafo.criarAresta(siglaToVertice.get("rn").getId(), siglaToVertice.get("pb").getId(), 185);
-        grafo.criarAresta(siglaToVertice.get("pb").getId(), siglaToVertice.get("pe").getId(), 120);
-        grafo.criarAresta(siglaToVertice.get("pe").getId(), siglaToVertice.get("al").getId(), 258);
-        grafo.criarAresta(siglaToVertice.get("al").getId(), siglaToVertice.get("se").getId(), 278);
-        grafo.criarAresta(siglaToVertice.get("se").getId(), siglaToVertice.get("ba").getId(), 356);
-        grafo.criarAresta(siglaToVertice.get("pi").getId(), siglaToVertice.get("pe").getId(), 510);
-        grafo.criarAresta(siglaToVertice.get("pi").getId(), siglaToVertice.get("ba").getId(), 947);
-        grafo.criarAresta(siglaToVertice.get("mt").getId(), siglaToVertice.get("ms").getId(), 694);
-        grafo.criarAresta(siglaToVertice.get("mt").getId(), siglaToVertice.get("go").getId(), 934); 
-        grafo.criarAresta(siglaToVertice.get("go").getId(), siglaToVertice.get("ms").getId(), 935); 
-        grafo.criarAresta(siglaToVertice.get("go").getId(), siglaToVertice.get("df").getId(), 209); 
-        grafo.criarAresta(siglaToVertice.get("go").getId(), siglaToVertice.get("ba").getId(), 814); 
-        grafo.criarAresta(siglaToVertice.get("go").getId(), siglaToVertice.get("to").getId(), 874); 
-        grafo.criarAresta(siglaToVertice.get("mt").getId(), siglaToVertice.get("to").getId(), 1300); 
-        grafo.criarAresta(siglaToVertice.get("mg").getId(), siglaToVertice.get("ba").getId(), 1372); 
-        grafo.criarAresta(siglaToVertice.get("mg").getId(), siglaToVertice.get("go").getId(), 906);
-        grafo.criarAresta(siglaToVertice.get("df").getId(), siglaToVertice.get("mg").getId(), 740); 
-        grafo.criarAresta(siglaToVertice.get("mg").getId(), siglaToVertice.get("es").getId(), 524); 
-        grafo.criarAresta(siglaToVertice.get("rj").getId(), siglaToVertice.get("es").getId(), 521); 
-        grafo.criarAresta(siglaToVertice.get("ba").getId(), siglaToVertice.get("es").getId(),  1200); 
-        grafo.criarAresta(siglaToVertice.get("mg").getId(), siglaToVertice.get("rj").getId(), 434); 
-        grafo.criarAresta(siglaToVertice.get("mg").getId(), siglaToVertice.get("sp").getId(), 586);
-        grafo.criarAresta(siglaToVertice.get("rj").getId(), siglaToVertice.get("sp").getId(), 429); 
-        grafo.criarAresta(siglaToVertice.get("sp").getId(), siglaToVertice.get("pr").getId(), 408); 
-        grafo.criarAresta(siglaToVertice.get("pr").getId(), siglaToVertice.get("sc").getId(), 300); 
-        grafo.criarAresta(siglaToVertice.get("sc").getId(), siglaToVertice.get("rs").getId(), 476);
-        grafo.criarAresta(siglaToVertice.get("ms").getId(), siglaToVertice.get("sp").getId(), 987);
+        aviaoImagem = new ImageIcon("ALGORITMO DE DIJKSTRA\\img\\aviao.png").getImage();
 
-        // Entrada do usuário
-        System.out.println("Digite a sigla da capital de origem (ex: DF):");
-        String origemInput = scanner.nextLine().trim().toLowerCase();
+        painelMapa = new JPanel() {
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(mapa, 0, 0, this);
 
-        System.out.println("Digite a sigla da capital de destino (ex: SP):");
-        String destinoInput = scanner.nextLine().trim().toLowerCase();
+                if (caminhoAtual.size() > 1) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setColor(Color.BLUE);
+                    g2d.setStroke(new BasicStroke(2f));
+                    for (int i = 0; i < caminhoAtual.size() - 1; i++) {
+                        String sigla1 = idToSigla.get(caminhoAtual.get(i).getId());
+                        String sigla2 = idToSigla.get(caminhoAtual.get(i + 1).getId());
+                        Point p1 = posicoesCapitais.get(sigla1);
+                        Point p2 = posicoesCapitais.get(sigla2);
+                        if (p1 != null && p2 != null) {
+                            g2d.drawLine(p1.x + 15, p1.y + 10, p2.x + 15, p2.y + 10);
+                        }
+                    }
+                }
 
-        if (!siglaToVertice.containsKey(origemInput) || !siglaToVertice.containsKey(destinoInput)) {
-            System.out.println("Sigla inválida. Tente novamente.");
-            return;
+                if (posicaoAviao != null && aviaoImagem != null) {
+                    g.drawImage(aviaoImagem, posicaoAviao.x, posicaoAviao.y, 32, 32, null);
+                }
+            }
+        };
+        painelMapa.setPreferredSize(new Dimension(630, 727));
+        painelMapa.setLayout(null);
+
+        for (String sigla : posicoesCapitais.keySet()) {
+            Point ponto = posicoesCapitais.get(sigla);
+            JButton botao = new JButton(sigla);
+            botao.setBounds(ponto.x, ponto.y, 30, 20);
+            botao.setFont(new Font("Arial", Font.BOLD, 10));
+            botao.setForeground(Color.RED);
+            botao.setContentAreaFilled(false);
+            botao.setBorderPainted(false);
+            botao.setFocusPainted(false);
+            botao.setMargin(new Insets(0, 0, 0, 0));
+            botao.addActionListener(e -> selecionarCapital(sigla, botao));
+            painelMapa.add(botao);
         }
 
-        Vertice origem = siglaToVertice.get(origemInput);
-        Vertice destino = siglaToVertice.get(destinoInput);
+        resultadoArea = new JTextArea(5, 40);
+        resultadoArea.setEditable(false);
+        resultadoArea.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
+
+        posicaoMouseLabel = new JLabel("Posição do mouse: ");
+        posicaoMouseLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
+        add(posicaoMouseLabel, BorderLayout.NORTH);
+
+        painelMapa.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                posicaoMouseLabel.setText("Posição do mouse: (" + e.getX() + ", " + e.getY() + ")");
+            }
+        });
+
+        add(new JScrollPane(painelMapa), BorderLayout.CENTER);
+        add(new JScrollPane(resultadoArea), BorderLayout.SOUTH);
+
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    private void selecionarCapital(String sigla, JButton botao) {
+        if (origemSelecionada == null) {
+            origemSelecionada = sigla;
+            botao.setForeground(Color.BLUE);
+        } else if (destinoSelecionado == null && !sigla.equals(origemSelecionada)) {
+            destinoSelecionado = sigla;
+            botao.setForeground(Color.GREEN);
+            calcularCaminho();
+        } else {
+            origemSelecionada = sigla;
+            destinoSelecionado = null;
+            resetarCores();
+            botao.setForeground(Color.BLUE);
+            resultadoArea.setText("");
+            caminhoAtual.clear();
+            posicaoAviao = null;
+            painelMapa.repaint();
+        }
+    }
+
+    private void resetarCores() {
+        for (Component b : painelMapa.getComponents()) {
+            if (b instanceof JButton) {
+                ((JButton) b).setForeground(Color.RED);
+            }
+        }
+    }
+
+    private void calcularCaminho() {
+        Vertice origem = siglaToVertice.get(origemSelecionada.toLowerCase());
+        Vertice destino = siglaToVertice.get(destinoSelecionado.toLowerCase());
         List<Vertice> caminho = grafo.caminhoMinimo(origem.getId(), destino.getId());
 
         if (caminho == null || caminho.isEmpty()) {
-            System.out.println("Não há caminho disponível entre as capitais.");
+            resultadoArea.setText("❌ Caminho não encontrado.");
+            caminhoAtual.clear();
+            posicaoAviao = null;
         } else {
-            System.out.print("Caminho: ");
+            caminhoAtual = caminho;
+            StringBuilder sb = new StringBuilder("🧭 Caminho: ");
             int distanciaTotal = 0;
-
             for (int i = 0; i < caminho.size(); i++) {
-                System.out.print(idToSigla.get(caminho.get(i).getId()));
+                sb.append(idToSigla.get(caminho.get(i).getId()));
                 if (i < caminho.size() - 1) {
-                    System.out.print(" -> ");
+                    sb.append(" → ");
                     distanciaTotal += grafo.getCusto(caminho.get(i).getId(), caminho.get(i + 1).getId());
                 }
             }
-            System.out.println("\nDistância total: " + distanciaTotal + " km");
+            sb.append("\n📏 Distância total: ").append(distanciaTotal).append(" km");
+            resultadoArea.setText(sb.toString());
+            animarAviao();
         }
 
-        scanner.close();
+        painelMapa.repaint();
+    }
+
+    private void animarAviao() {
+        if (animacaoTimer != null && animacaoTimer.isRunning()) animacaoTimer.stop();
+        pontosInterpolados.clear();
+
+        for (int i = 0; i < caminhoAtual.size() - 1; i++) {
+            Point p1 = posicoesCapitais.get(idToSigla.get(caminhoAtual.get(i).getId()));
+            Point p2 = posicoesCapitais.get(idToSigla.get(caminhoAtual.get(i + 1).getId()));
+
+            int passos = 20;
+            for (int j = 0; j <= passos; j++) {
+                int x = (int) (p1.x + (p2.x - p1.x) * (j / (float) passos));
+                int y = (int) (p1.y + (p2.y - p1.y) * (j / (float) passos));
+                pontosInterpolados.add(new Point(x + 10, y + 10));
+            }
+        }
+
+        etapaAnimacao = 0;
+        animacaoTimer = new Timer(50, e -> {
+            if (etapaAnimacao >= pontosInterpolados.size()) {
+                animacaoTimer.stop();
+                posicaoAviao = null;
+            } else {
+                posicaoAviao = pontosInterpolados.get(etapaAnimacao);
+                etapaAnimacao++;
+                painelMapa.repaint();
+            }
+        });
+        animacaoTimer.start();
+    }
+
+    private void inicializarDados() {
+        grafo = new AlgoritmoDijkstra();
+        siglaToVertice = new HashMap<>();
+        idToSigla = new HashMap<>();
+        posicoesCapitais = new HashMap<>();
+
+        List<String> siglas = Arrays.asList("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+                "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO");
+
+        for (int i = 0; i < siglas.size(); i++) {
+            String sigla = siglas.get(i);
+            Vertice v = new Vertice(i);
+            grafo.adicionarVertice(i);
+            siglaToVertice.put(sigla.toLowerCase(), v);
+            idToSigla.put(i, sigla);
+        }
+
+        Object[][] arestas = {
+                { "ac", "ro", 544 }, { "am", "ro", 901 }, { "am", "rr", 785 }, { "am", "mt", 2350 },
+                { "am", "pa", 5293 }, { "ap", "pa", 605 }, { "rr", "pa", 1518 }, { "ro", "mt", 1450 },
+                { "pa", "to", 1085 }, { "pa", "ma", 806 }, { "ma", "pi", 446 }, { "pi", "ce", 598 },
+                { "ce", "rn", 528 }, { "rn", "pb", 185 }, { "pb", "pe", 120 }, { "pe", "al", 258 },
+                { "al", "se", 278 }, { "se", "ba", 356 }, { "pi", "pe", 510 }, { "pi", "ba", 947 },
+                { "mt", "ms", 694 }, { "mt", "go", 934 }, { "go", "ms", 935 }, { "go", "df", 209 },
+                { "go", "ba", 814 }, { "go", "to", 874 }, { "mt", "to", 1300 }, { "mg", "ba", 1372 },
+                { "mg", "go", 906 }, { "df", "mg", 740 }, { "mg", "es", 449 }, { "rj", "es", 521 },
+                { "ba", "es", 1200 }, { "mg", "rj", 434 }, { "mg", "sp", 586 }, { "rj", "sp", 429 },
+                { "sp", "pr", 408 }, { "pr", "sc", 300 }, { "sc", "rs", 476 }, { "ms", "sp", 987 }
+        };
+
+        for (Object[] a : arestas) {
+            String origem = (String) a[0];
+            String destino = (String) a[1];
+            int distancia = (int) a[2];
+            grafo.criarAresta(siglaToVertice.get(origem).getId(), siglaToVertice.get(destino).getId(), distancia);
+        }
+
+        posicoesCapitais.put("AC", new Point(55, 274));
+        posicoesCapitais.put("AL", new Point(604, 285));
+        posicoesCapitais.put("AP", new Point(349, 79));
+        posicoesCapitais.put("AM", new Point(151, 176));
+        posicoesCapitais.put("BA", new Point(500, 330));
+        posicoesCapitais.put("CE", new Point(539, 196));
+        posicoesCapitais.put("DF", new Point(396, 374));
+        posicoesCapitais.put("ES", new Point(526, 465));
+        posicoesCapitais.put("GO", new Point(371, 410));
+        posicoesCapitais.put("MA", new Point(457, 194));
+        posicoesCapitais.put("MT", new Point(305, 335));
+        posicoesCapitais.put("MS", new Point(305, 475));
+        posicoesCapitais.put("MG", new Point(459, 452));
+        posicoesCapitais.put("PA", new Point(326, 189));
+        posicoesCapitais.put("PB", new Point(599, 238));
+        posicoesCapitais.put("PR", new Point(351, 550));
+        posicoesCapitais.put("PE", new Point(569, 262));
+        posicoesCapitais.put("PI", new Point(483, 254));
+        posicoesCapitais.put("RJ", new Point(493, 512));
+        posicoesCapitais.put("RN", new Point(590, 218));
+        posicoesCapitais.put("RS", new Point(331, 640));
+        posicoesCapitais.put("RO", new Point(177, 301));
+        posicoesCapitais.put("RR", new Point(199, 62));
+        posicoesCapitais.put("SC", new Point(371, 598));
+        posicoesCapitais.put("SP", new Point(395, 508));
+        posicoesCapitais.put("SE", new Point(579, 306));
+        posicoesCapitais.put("TO", new Point(406, 298));
     }
 
     public static void main(String[] args) {
-        new Main().run();
+        SwingUtilities.invokeLater(() -> new Main().setVisible(true));
     }
 }
