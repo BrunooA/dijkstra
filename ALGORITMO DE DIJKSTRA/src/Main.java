@@ -1,73 +1,55 @@
 package src;
 
-// Importações necessárias para interface gráfica e estruturas de dados
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 import javax.swing.Timer;
 
-// Classe principal que estende JFrame para criar a interface gráfica
 public class Main extends JFrame {
 
-    // Mapeia a sigla da capital para posição no mapa
+    // Mapa de capitais e estruturas do grafo
     private Map<String, Point> posicoesCapitais;
-
-    // Mapeia a sigla da capital para o objeto Vertice (usado no grafo)
     private Map<String, Vertice> siglaToVertice;
-
-    // Mapeia o ID numérico do vértice para sua sigla (usado para exibir resultados)
     private Map<Integer, String> idToSigla;
-
-    // Objeto que representa o grafo com Dijkstra
     private AlgoritmoDijkstra grafo;
 
-    // Armazena as capitais selecionadas para calcular o caminho
+    // Capitais selecionadas para o cálculo
     private String origemSelecionada = null;
     private String destinoSelecionado = null;
 
-    // Área de texto onde aparece o resultado do caminho e distância
+    // Componentes da interface
     private JTextArea resultadoArea;
-
-    // Imagem do mapa do Brasil e painel onde será desenhado
     private Image mapa;
     private JPanel painelMapa;
-
-    // Lista com o caminho atual calculado pelo algoritmo
     private List<Vertice> caminhoAtual = new ArrayList<>();
-
-    // Label que mostra a posição do mouse sobre o mapa
     private JLabel posicaoMouseLabel;
 
-    // Variáveis usadas para animar o avião no caminho
+    // Controle da animação do avião
     private Timer animacaoTimer;
     private int etapaAnimacao = 0;
     private List<Point> pontosInterpolados = new ArrayList<>();
     private Point posicaoAviao = null;
     private Image aviaoImagem;
 
-    // Construtor da janela principal
     public Main() {
         setTitle("Menor Caminho entre Capitais - Dijkstra");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        // Inicializa os dados do grafo e posições no mapa
-        inicializarDados();
+        inicializarDados(); // Monta o grafo, vértices, arestas e posições
 
-        // Carrega e redimensiona a imagem do mapa
+        // Carrega imagens
         ImageIcon iconeOriginal = new ImageIcon("ALGORITMO DE DIJKSTRA\\img\\mapa.jpg");
         mapa = iconeOriginal.getImage().getScaledInstance(630, 727, Image.SCALE_SMOOTH);
-
-        // Carrega imagem do avião
         aviaoImagem = new ImageIcon("ALGORITMO DE DIJKSTRA\\img\\aviao.png").getImage();
 
-        // Cria o painel onde o mapa e os caminhos serão desenhados
+        // Cria o painel com o mapa e caminho desenhado
         painelMapa = new JPanel() {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(mapa, 0, 0, this); // Desenha o mapa
+                g.drawImage(mapa, 0, 0, this);
 
-                // Desenha o caminho em azul se houver caminho atual
+                // Desenha o caminho entre as capitais
                 if (caminhoAtual.size() > 1) {
                     Graphics2D g2d = (Graphics2D) g;
                     g2d.setColor(Color.BLUE);
@@ -83,16 +65,16 @@ public class Main extends JFrame {
                     }
                 }
 
-                // Desenha o avião em sua posição atual, se houver
+                // Desenha o avião durante a animação
                 if (posicaoAviao != null && aviaoImagem != null) {
                     g.drawImage(aviaoImagem, posicaoAviao.x, posicaoAviao.y, 32, 32, null);
                 }
             }
         };
         painelMapa.setPreferredSize(new Dimension(630, 727));
-        painelMapa.setLayout(null); // Para poder posicionar botões livremente
+        painelMapa.setLayout(null);
 
-        // Cria botões para cada capital e adiciona ao painel
+        // Cria botões das capitais no mapa
         for (String sigla : posicoesCapitais.keySet()) {
             Point ponto = posicoesCapitais.get(sigla);
             JButton botao = new JButton(sigla);
@@ -107,32 +89,29 @@ public class Main extends JFrame {
             painelMapa.add(botao);
         }
 
-        // Área onde o resultado do caminho é mostrado
+        // Resultado do caminho e distância
         resultadoArea = new JTextArea(5, 40);
         resultadoArea.setEditable(false);
         resultadoArea.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
 
-        // Label que mostra a posição do mouse
+        // Mostra coordenadas do mouse sobre o mapa
         posicaoMouseLabel = new JLabel("Posição do mouse: ");
         posicaoMouseLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
         add(posicaoMouseLabel, BorderLayout.NORTH);
 
-        // Atualiza label ao mover o mouse
         painelMapa.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseMoved(java.awt.event.MouseEvent e) {
                 posicaoMouseLabel.setText("Posição do mouse: (" + e.getX() + ", " + e.getY() + ")");
             }
         });
 
-        // Adiciona os componentes à janela
         add(new JScrollPane(painelMapa), BorderLayout.CENTER);
         add(new JScrollPane(resultadoArea), BorderLayout.SOUTH);
-
-        pack(); // Ajusta o tamanho da janela automaticamente
-        setLocationRelativeTo(null); // Centraliza a janela
+        pack();
+        setLocationRelativeTo(null);
     }
 
-    // Função chamada ao clicar em um botão de capital
+    // Controla a seleção de origem e destino
     private void selecionarCapital(String sigla, JButton botao) {
         if (origemSelecionada == null) {
             origemSelecionada = sigla;
@@ -140,9 +119,8 @@ public class Main extends JFrame {
         } else if (destinoSelecionado == null && !sigla.equals(origemSelecionada)) {
             destinoSelecionado = sigla;
             botao.setForeground(Color.GREEN);
-            calcularCaminho(); // Calcula quando tem origem e destino
+            calcularCaminho(); // Executa o Dijkstra
         } else {
-            // Se clicar de novo, redefine tudo
             origemSelecionada = sigla;
             destinoSelecionado = null;
             resetarCores();
@@ -154,7 +132,6 @@ public class Main extends JFrame {
         }
     }
 
-    // Restaura a cor vermelha de todos os botões
     private void resetarCores() {
         for (Component b : painelMapa.getComponents()) {
             if (b instanceof JButton) {
@@ -163,7 +140,7 @@ public class Main extends JFrame {
         }
     }
 
-    // Chama o algoritmo de Dijkstra e exibe o caminho
+    // Executa o algoritmo de Dijkstra e mostra resultado
     private void calcularCaminho() {
         Vertice origem = siglaToVertice.get(origemSelecionada.toLowerCase());
         Vertice destino = siglaToVertice.get(destinoSelecionado.toLowerCase());
@@ -185,15 +162,16 @@ public class Main extends JFrame {
                     distanciaTotal += grafo.getCusto(caminho.get(i).getId(), caminho.get(i + 1).getId());
                 }
             }
+
             sb.append("\n📏 Distância total: ").append(distanciaTotal).append(" km");
             resultadoArea.setText(sb.toString());
-            animarAviao(); // Inicia animação
+            animarAviao(); // Inicia a animação
         }
 
         painelMapa.repaint();
     }
 
-    // Cria os pontos da animação e move o avião
+    // Move o avião no caminho gerado
     private void animarAviao() {
         if (animacaoTimer != null && animacaoTimer.isRunning()) animacaoTimer.stop();
         pontosInterpolados.clear();
@@ -201,8 +179,8 @@ public class Main extends JFrame {
         for (int i = 0; i < caminhoAtual.size() - 1; i++) {
             Point p1 = posicoesCapitais.get(idToSigla.get(caminhoAtual.get(i).getId()));
             Point p2 = posicoesCapitais.get(idToSigla.get(caminhoAtual.get(i + 1).getId()));
+            int passos = 20;
 
-            int passos = 20; // define a "suavidade"
             for (int j = 0; j <= passos; j++) {
                 int x = (int) (p1.x + (p2.x - p1.x) * (j / (float) passos));
                 int y = (int) (p1.y + (p2.y - p1.y) * (j / (float) passos));
@@ -221,10 +199,11 @@ public class Main extends JFrame {
                 painelMapa.repaint();
             }
         });
+
         animacaoTimer.start();
     }
 
-    // Inicializa os vértices, arestas e posições no mapa
+    // Inicializa capitais, vértices, arestas e coordenadas no mapa
     private void inicializarDados() {
         grafo = new AlgoritmoDijkstra();
         siglaToVertice = new HashMap<>();
@@ -242,7 +221,6 @@ public class Main extends JFrame {
             idToSigla.put(i, sigla);
         }
 
-        // Arestas (conexões entre capitais)
         Object[][] arestas = {
             { "ac", "ro", 544 }, { "am", "ro", 901 }, { "am", "rr", 785 }, { "am", "mt", 2350 },
             { "am", "pa", 5293 }, { "ap", "pa", 605 }, { "rr", "pa", 1518 }, { "ro", "mt", 1450 },
@@ -263,7 +241,6 @@ public class Main extends JFrame {
             grafo.criarAresta(siglaToVertice.get(origem).getId(), siglaToVertice.get(destino).getId(), distancia);
         }
 
-        // Coordenadas (ajustadas manualmente para o mapa 630x727)
         posicoesCapitais.put("AC", new Point(55, 274));
         posicoesCapitais.put("AL", new Point(604, 285));
         posicoesCapitais.put("AP", new Point(349, 79));
@@ -293,7 +270,6 @@ public class Main extends JFrame {
         posicoesCapitais.put("TO", new Point(406, 298));
     }
 
-    // Função principal que inicia o programa
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Main().setVisible(true));
     }
